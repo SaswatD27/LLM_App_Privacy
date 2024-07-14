@@ -16,4 +16,5 @@ Features:
 More to come:
 * Utility measurement metrics
 * Privacy protection measurement metrics
+* Bulk querying
 * And more
