@@ -12,3 +12,8 @@ Features:
 * Adds safety prompt of choice from a dictionary
 * Fetches context from the adult dataset
 * Sets up agent with the applied defenses, safety prompt attack prompt, input query, etc.
+
+More to come:
+* Utility measurement metrics
+* Privacy protection measurement metrics
+* And more
