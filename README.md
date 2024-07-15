@@ -1,4 +1,5 @@
 # LLM Application Privacy
+## Overview
 Readme to be updated.
 
 For a sample run, use the following command. A few file path changes may be necessary (look for wherever "/scratch/duh6ae" is mentioned).
@@ -20,7 +21,7 @@ More to come:
 * Bulk querying
 * And more
 
-# Files
+## Files
 * /local_data: Contains datasets that are available offline.
 * /src/main.py: Main executable for an example run with a safety_prompt, a Cognitive Hacking attack prompt, a query about the person's race (from the adult dataset), a query prefilter (rewriter), and postfilter (checks for forbidden words in the response).
 * /src/utils: Contains files for instantiating the agent and loaders for attacks, defenses, and contexts.
