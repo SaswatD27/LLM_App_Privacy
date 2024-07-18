@@ -11,3 +11,5 @@ if __name__ == '__main__':
         input_text = "Does this person earn more than 50000 dollars (yes or no)?"
         response = app_agent.generate_response(input_text)
         print(f'Response: {response}')
+        print(f'Label: {data[i]["label"]}')
+        print(f'Label in response?: {data[i]["label"].lower() in response.lower()}')

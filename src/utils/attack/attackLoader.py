@@ -6,5 +6,5 @@ class attackLoader:
         pass
 
     def get_attack_prompt(self, attack_type='none', prompt_index=1):
-        attack_prompts = load_yaml('/scratch/duh6ae/LLM_App_Privacy/src/utils/attack/attack_dictionary.yaml')
+        attack_prompts = load_yaml('/bigtemp/duh6ae/LLM_App_Privacy/src/utils/attack/attack_dictionary.yaml')
         return attack_prompts[attack_type][f'type{prompt_index}']['prompt']
