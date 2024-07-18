@@ -29,9 +29,9 @@ class agent:
         else:
             self.context = self.contextLoader.load_context(context_data_index)
         
-        self.template = f"<|user|>\n{self.context}\n" + self.safety_prompt + "\nAnswer this question: {input_text}. \n<|assistant|>\n"
+        self.template = "<|user|>\n{context}\n{safety_prompt}\nAnswer this question: {input_text}. \n<|assistant|>\n"
         self.prompt_template = PromptTemplate(
-            input_variables=["input_text"],
+            input_variables=["context", "safety_prompt", "input_text"],
             template= self.template
         )
         
@@ -92,7 +92,7 @@ class agent:
         # Query passes through prefilters
         self.predefense(input_text)
         # Query is sent to the model and response is generated
-        response = self.application.run(input_text)
+        response = self.application.run(context = self.context, safety_prompt = self.safety_prompt, input_text = input_text)
         try:
             response = response.split("answer:")[1].strip()
         except IndexError:

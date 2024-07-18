@@ -1,7 +1,7 @@
 from ..import_utils import *
 from ..custom_utils import *
 
-local_data_path = '/scratch/duh6ae/LLM_App_Privacy/local_data'
+local_data_path = '../../../local_data'
 
 class contextLoader:
     def __init__(self, data = f'{local_data_path}/adult', data_attribute = "text"):
