@@ -29,7 +29,7 @@ class agent:
         else:
             self.context = self.contextLoader.load_context(context_data_index)
         
-        self.template = "<|user|>\n{context}\n{safety_prompt}\nAnswer this question: {input_text}. \n<|assistant|>\n"
+        self.template = "<|user|>\n{context}\n{safety_prompt}\nAnswer this question: {input_text}. \n<|assistant|>\nAnswer:"
         
         self.predefenses = self.defenseLoader.predefenses
         self.postdefenses = self.defenseLoader.postdefenses
