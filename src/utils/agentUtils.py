@@ -21,10 +21,6 @@ class agent:
         self.do_sample = do_sample
         self.model_name = model_name
         self.model = AutoModelForCausalLM.from_pretrained(model_name).to(self.device)
-        if torch.cuda.device_count() > 1:
-            print("Using", torch.cuda.device_count(), "GPUs")
-            self.model = torch.nn.DataParallel(self.model)
-        self.model.to(self.device)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.sensitive_attributes = sensitive_attributes
 
