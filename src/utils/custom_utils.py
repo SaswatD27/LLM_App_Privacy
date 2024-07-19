@@ -11,3 +11,8 @@ def generate_text(input_text, model, tokenizer, max_new_tokens = 50):
 
     generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
     return generated_text
+
+def ddp_setup(rank, world_size):
+    os.environ['MASTER_ADDR'] = 'localhost'
+    os.environ['MASTER_PORT'] = '12355'
+    dist.init_process_group("nccl", rank=rank, world_size=world_size)

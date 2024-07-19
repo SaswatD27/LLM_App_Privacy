@@ -21,6 +21,10 @@ class agent:
         self.do_sample = do_sample
         self.model_name = model_name
         self.model = AutoModelForCausalLM.from_pretrained(model_name).to(self.device)
+        if torch.cuda.device_count() > 1:
+            print("Using", torch.cuda.device_count(), "GPUs")
+            self.model = torch.nn.DataParallel(self.model)
+        self.model.to(self.device)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.sensitive_attributes = sensitive_attributes
 
@@ -62,8 +66,11 @@ class agent:
     def generate_response(self, input_text):
         prompt = self.template.format(context=self.context, safety_prompt=self.safety_prompt, input_text=input_text)
         inputs = self.tokenizer(prompt, return_tensors="pt", return_attention_mask=False).to(self.device)
-        outputs = self.model.generate(**inputs, max_new_tokens=50, return_dict_in_generate=True, output_scores=True)
+        outputs = self.model.generate(**inputs, max_new_tokens=self.max_new_tokens, return_dict_in_generate=True, output_scores=True)
         output_text = self.tokenizer.decode(outputs.sequences[0], skip_special_tokens=True)
+        #delete inputs and outputs from the gpu memory
+        del inputs
+        del outputs
         return output_text
 
     def run(self, input_text):
@@ -72,7 +79,7 @@ class agent:
         # Query passes through prefilters
         self.predefense(input_text)
         # Query is sent to the model and response is generated
-        response = self.generate_response(self, input_text)
+        response = self.generate_response(input_text)
         try:
             response = response.split("answer:")[1].strip()
         except IndexError:
