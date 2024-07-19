@@ -30,38 +30,11 @@ class agent:
             self.context = self.contextLoader.load_context(context_data_index)
         
         self.template = "<|user|>\n{context}\n{safety_prompt}\nAnswer this question: {input_text}. \n<|assistant|>\n"
-        self.prompt_template = PromptTemplate(
-            input_variables=["context", "safety_prompt", "input_text"],
-            template= self.template
-        )
-        
-        self.llm_pipeline = HuggingFacePipeline(pipeline = pipeline(
-            task="text-generation",
-            model=self.model,
-            tokenizer=self.tokenizer,
-            device=self.device,  # Use GPU if available
-            max_new_tokens=self.max_new_tokens,
-            do_sample=self.do_sample,
-            repetition_penalty=self.repetition_penalty
-        ))
         
         self.predefenses = self.defenseLoader.predefenses
         self.postdefenses = self.defenseLoader.postdefenses
-        self.application = LLMChain(llm=self.llm_pipeline, prompt=self.prompt_template)
         self.attack_prompt_type = attack_prompt_type
         self.attack_prompt_index = attack_prompt_index
-
-    def get_pipeline(self):
-        llm_pipeline = pipeline(
-            task="text-generation",
-            model=self.model,
-            tokenizer=self.tokenizer,
-            device=self.device,  # Use GPU if available
-            max_new_tokens=self.max_new_tokens,
-            do_sample=self.do_sample,
-            repetition_penalty=self.repetition_penalty
-        )
-        return HuggingFacePipeline(pipeline=llm_pipeline)
     
     def get_predefenses(self):
         return self.defenseLoader.predefenses
@@ -85,14 +58,21 @@ class agent:
         attack = self.attackLoader.get_attack_prompt(self.attack_prompt_type, self.attack_prompt_index)
         input_text = attack + '\n' + input_text
         return input_text
-
+    
     def generate_response(self, input_text):
+        prompt = self.template.format(context=self.context, safety_prompt=self.safety_prompt, input_text=input_text)
+        inputs = self.tokenizer(prompt, return_tensors="pt", return_attention_mask=False).to(self.device)
+        outputs = self.model.generate(**inputs, max_new_tokens=50, return_dict_in_generate=True, output_scores=True)
+        output_text = self.tokenizer.decode(outputs.sequences[0], skip_special_tokens=True)
+        return output_text
+
+    def run(self, input_text):
         # Adversary applies the attack prompt to the query
         input_text = self.apply_attack_prompt(input_text)
         # Query passes through prefilters
         self.predefense(input_text)
         # Query is sent to the model and response is generated
-        response = self.application.run(context = self.context, safety_prompt = self.safety_prompt, input_text = input_text)
+        response = self.generate_response(self, input_text)
         try:
             response = response.split("answer:")[1].strip()
         except IndexError:
