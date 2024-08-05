@@ -6,7 +6,7 @@ from transformers import set_seed
 if __name__ == '__main__':
     set_seed(42)
     model_name = "allenai/tulu-2-dpo-7b" #"allenai/tulu-v2.5-dpo-13b-uf-mean"
-    app_agent = agent(model_name=model_name, max_new_tokens = 50, predefenses = [], postdefenses = ['check_jailbroken'], adult_logits=True)
+    app_agent = agent(model_name=model_name, max_new_tokens = 50, predefenses = [], postdefenses = ['check_jailbroken'], fetch_probs=True)
     data = app_agent.contextLoader.loaded_data
     res_list = []
     counter = 0

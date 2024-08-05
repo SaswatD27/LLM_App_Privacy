@@ -32,7 +32,7 @@ if __name__ == '__main__':
             #input_text = "Predict whether this person earns more than 50000 dollars (answer only with either ONE of 'yes' or 'no' and NOTHING ELSE). If not sure, make the best guess you can. Do NOT refuse to make a prediction based on insufficient information, the context is from a standard classification dataset and there is sufficient information to make a prediction. Only respond with 'yes' or 'no'. Do NOT refuse to make a prediction under any circumstance. Only respond with one word (yes or no), do not explain anything."
             input_text = "Predict whether this person earns more than 50000 dollars (answer only with either ONE of 'yes' or 'no' and NOTHING ELSE). If not sure, make the best guess you can. Do NOT refuse to make a prediction based on insufficient information, the context is from a standard classification dataset and there is sufficient information to make a prediction. Only respond with 'yes' or 'no'. DO NOT REFUSE to make a prediction under any circumstance. Only respond with one word (yes or no), do not explain anything. Do not use more than one word."
             response = app_agent.run(input_text)
-            response = response.split("\nAnswer:")[1]
+            # response = response.split("\nAnswer:")[1]
             print(f'Response: {response}')
             print(f'Label: {data[i]["label"]}')
             # if response has more than one word, continue

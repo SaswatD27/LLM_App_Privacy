@@ -6,7 +6,7 @@
 #SBATCH --partition="gpu"
 #SBATCH --gres=gpu:1
 #SBATCH  --mem=30G
-#SBATCH --time=47:59:59
+#SBATCH --time=71:59:59
 #SBATCH --nodelist=puma02
 #SBATCH --reservation=eda8pc_110
 
@@ -17,4 +17,4 @@ export PATH=/u/duh6ae/.vscode-server/bin/6c3e3dba23e8fadc360aed75ce363ba185c4979
 export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128
 
 cd /bigtemp/duh6ae/LLM_App_Privacy
-python -m src.tests.adult_utility_w_safety_prompt_w_attacks
+python -m src.tests.adult_utility_w_safety_prompt_w_attacks_inc_jailbrokenstats

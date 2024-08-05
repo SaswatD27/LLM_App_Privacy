@@ -4,7 +4,7 @@ from .attack.attackLoader import attackLoader
 from .contextLoading.contextLoader import contextLoader
 
 class agent:
-    def __init__(self, model_name, context = None, cache_dir = '/bigtemp/duh6ae/hfhub_cache', max_new_tokens = 250, do_sample = False, repetition_penalty = 1.03, safety_prompt_index = 1, attack_prompt_type = 'none', attack_prompt_index = 1, context_data = '/bigtemp/duh6ae/LLM_App_Privacy/local_data/adult', context_data_attribute = 'text', context_data_index = 0, predefenses=["query_rewriter"], postdefenses=["check_jailbroken"], sensitive_attributes = ["race", "age", "education", "marital status"], fetch_logits = False):
+    def __init__(self, model_name, context = None, cache_dir = '/bigtemp/duh6ae/hfhub_cache', max_new_tokens = 250, do_sample = False, repetition_penalty = 1.03, safety_prompt_index = 1, attack_prompt_type = 'none', attack_prompt_index = 1, context_data = '/bigtemp/duh6ae/LLM_App_Privacy/local_data/adult', context_data_attribute = 'text', context_data_index = 0, predefenses=["query_rewriter"], postdefenses=["check_jailbroken"], sensitive_attributes = ["race", "age", "education", "marital status", "gender"], attributes = [], fetch_probs = False):
         os.environ['HF_HOME'] = cache_dir
         self.predefenses = predefenses
         self.postdefenses = postdefenses
@@ -28,6 +28,8 @@ class agent:
             self.context = context
         else:
             self.context = self.contextLoader.load_context(context_data_index)
+
+        self.attributes = self.get_attributes()
         
         self.template = "<|user|>\n{context}\n{safety_prompt}\nAnswer this question: {input_text}. \n<|assistant|>\nAnswer:"
         
@@ -36,7 +38,18 @@ class agent:
         self.attack_prompt_type = attack_prompt_type
         self.attack_prompt_index = attack_prompt_index
 
-        self.fetch_logits = fetch_logits
+        self.fetch_probs = fetch_probs
+
+    def get_attributes(self): # works for the adult data, might need to tweak if context format changes
+       context_shards = self.context.split('.')
+       attribute_list = []
+       for shard in context_shards:
+            if ' is ' in shard:
+                attribute_list.append(shard.split(' is ')[0].lower()[1:])
+       print(f'attribute_list: {attribute_list}')
+       assert len(attribute_list) > 0, "No attributes found in context"
+       # print(attribute_list)
+       return attribute_list        
     
     def get_predefenses(self):
         return self.defenseLoader.predefenses
@@ -61,59 +74,79 @@ class agent:
         input_text = attack + '\n' + input_text
         return input_text
     
+    def get_probs(self, outputs, token_list, input_len):
+        # Extract the logits from the output
+        logits = outputs.scores
+        for step, step_logits in enumerate(logits):
+            # Convert logits to probabilities
+            probabilities = torch.softmax(step_logits[0], dim=-1)
+            
+            # Get all token IDs and their corresponding probabilities
+            token_ids = torch.arange(probabilities.size(-1)).tolist()
+            prob_values = probabilities.tolist()
+            
+            # Decode the token IDs to tokens
+            tokens = self.tokenizer.convert_ids_to_tokens(token_ids)
+
+            target_token_id_list = [self.tokenizer(tok, add_special_tokens=False)['input_ids'][0] for tok in token_list]
+            # Print the step number, tokens, and their corresponding probabilities
+            print(f"\nStep {step + 1}:")
+            cumulative_prob = 0
+            for token, token_id, prob in zip(tokens, token_ids, prob_values):
+                if token in token_list or token_id in target_token_id_list:
+                    print(f"Token: {token}, Probability: {prob}")
+                    if step + 1 == 1:
+                        cumulative_prob += prob
+        return cumulative_prob
+
+    
     def generate_response(self, input_text):
         prompt = self.template.format(context=self.context, safety_prompt=self.safety_prompt, input_text=input_text)
         inputs = self.tokenizer(prompt, return_tensors="pt", return_attention_mask=False).to(self.device)
+        input_len = inputs.input_ids.shape[1]
         outputs = self.model.generate(**inputs, max_new_tokens=self.max_new_tokens, return_dict_in_generate=True, output_scores=True)
         #print(outputs)
         ###
-        print(f'Fetch Label Logits?: {self.fetch_logits}')
-        if self.fetch_logits:
-            print('Fetching Label Logits!')
-            # Token IDs for "yes" and "no" (case insensitive)
-            yes_token_ids = [self.tokenizer.convert_tokens_to_ids(tok) for tok in ['yes']] #['yes', 'Yes', 'YES']
-            no_token_ids = [self.tokenizer.convert_tokens_to_ids(tok) for tok in ['no']] #['no', 'No', 'NO']
-
-            transition_scores = self.model.compute_transition_scores(
-                outputs.sequences, outputs.scores, normalize_logits=True
-            )
-
-            input_length = inputs.input_ids.shape[1]
-            generated_tokens = outputs.sequences[:, input_length:]
-            print(f"generated_tokens:{generated_tokens}")
-            for tok, score in zip(generated_tokens[0], transition_scores[0]):
-                # | token | token string | logits | probability
-                decoded_tok = self.tokenizer.decode(tok).lower()
-                if 'yes' in decoded_tok or 'no' in decoded_tok:
-                    print(f"| {tok:5d} | {self.tokenizer.decode(tok):8s} | {score.cpu().numpy():.4f} | {np.exp(score.cpu().numpy()):.2%}")
-                        
-            # # Extract logits for "yes" and "no" from outputs.scores
-            # yes_logits = []
-            # no_logits = []
-            
-            # for scores in outputs.scores:
-            #     # Find logits for "yes" tokens
-            #     yes_logits.append(scores[-1, yes_token_ids].detach().cpu().numpy())
-            #     # Find logits for "no" tokens
-            #     no_logits.append(scores[-1, no_token_ids].detach().cpu().numpy())
-            
-            # # Average logits across all positions
-            # yes_logits = np.mean(np.concatenate(yes_logits, axis=0), axis=0)
-            # no_logits = np.mean(np.concatenate(no_logits, axis=0), axis=0)
-            # # logits = outputs.scores[0] #outputs.logits if hasattr(outputs, 'logits') else
-            # # print(len(logits), len(outputs.sequences[0]))
-            # # yes_token_ids = [self.tokenizer.convert_tokens_to_ids(tok) for tok in ['yes', 'Yes', 'YES']]
-            # # no_token_ids = [self.tokenizer.convert_tokens_to_ids(tok) for tok in ['no', 'No', 'NO']]
-            
-            # # yes_logits = logits[:, yes_token_ids].mean(dim=-1).detach().cpu().numpy()
-            # # no_logits = logits[:, no_token_ids].mean(dim=-1).detach().cpu().numpy()
-            
-            # print(f"Logits for 'yes': {yes_logits}")
-            # print(f"Logits for 'no': {no_logits}")
-        ###
+        print(f'Fetch Label Logits?: {self.fetch_probs}')
+        if self.fetch_probs:
+            cumulative_prob_dict = {'options': [], 'sensitive': [], 'non_sensitive': []}
+            option_token_list = ['yes', 'no']
+            sensitive_token_list = []
+            non_sensitive_token_list = []
+            for att in self.attributes:
+                # print(f'Sensitive Attributes: {self.sensitive_attributes}')
+                # print(f'All Attributes: {self.attributes}')
+                # print(f'Attribute: {att}')
+                # print(f'Attribute in sensitive?: {att in self.sensitive_attributes}')
+                # print(self.context)
+                if att in self.sensitive_attributes:
+                    try:
+                        sensitive_token_list.append(self.context.lower().split(f'{att} is ')[1].split('.')[0])
+                    except:
+                        print(f'Error with attribute: {att}. Perhaps absent.')
+                        #print(self.context.lower().split(f'{att} is '))
+                        pass
+                else:
+                    try:
+                        non_sensitive_token_list.append(self.context.lower().split(f'{att} is ')[1].split('.')[0])
+                    except:
+                        print(f'Error with attribute: {att}. Perhaps absent.')
+                        #print(self.context.lower().split(f'{att} is '))
+                        pass
+            print('##################\n OPTION TOKENS')
+            cumulative_prob_dict['options'] = [self.get_probs(outputs, option_token_list, input_len)]
+            print('SENSITIVE TOKENS')
+            print(sensitive_token_list)
+            cumulative_prob_dict['sensitive'] = [self.get_probs(outputs, sensitive_token_list, input_len)]
+            print('NON-SENSITIVE TOKENS')
+            cumulative_prob_dict['non-sensitive'] = [self.get_probs(outputs, non_sensitive_token_list, input_len)]
+            print('##################')
+            print(f'Cumulative Probabilities: {cumulative_prob_dict}')
         #output_text = self.tokenizer.batch_decode(outputs.sequences, skip_special_tokens=True)[0]
         output_text = self.tokenizer.decode(outputs.sequences[0], skip_special_tokens=True)
+        print(f'Output Text: {output_text}')
         #delete inputs and outputs from the gpu memory
+
         del inputs
         del outputs
         return output_text
@@ -128,7 +161,7 @@ class agent:
         # print(f'Unfiltered Response: {response} OVER')
         try:
             # try:
-            response = response.split("answer:")[1].strip()
+            response = response.split("Answer:")[1].strip()
             # except:
             #     print(response)
             #     exit()
