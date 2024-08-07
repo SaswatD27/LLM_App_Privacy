@@ -1,37 +1,0 @@
-Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:06<00:06,  6.42s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:08<00:00,  4.00s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:08<00:00,  4.36s/it]
-You are using the default legacy behaviour of the <class 'transformers.models.llama.tokenization_llama.LlamaTokenizer'>. This is expected, and simply means that the `legacy` (previous) behavior will be used so nothing changes for you. If you want to use the new behaviour, set `legacy=False`. This should only be set if you understand what it means, and thoroughly read the reason why this was added as explained in https://github.com/huggingface/transformers/pull/24565 - if you loaded a llama tokenizer from a GGUF file you can ignore this message
-You are using the default legacy behaviour of the <class 'transformers.models.llama.tokenization_llama_fast.LlamaTokenizerFast'>. This is expected, and simply means that the `legacy` (previous) behavior will be used so nothing changes for you. If you want to use the new behaviour, set `legacy=False`. This should only be set if you understand what it means, and thoroughly read the reason why this was added as explained in https://github.com/huggingface/transformers/pull/24565 - if you loaded a llama tokenizer from a GGUF file you can ignore this message.
-  0%|          | 0/5000 [00:00<?, ?it/s]
-Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s][A
-Loading checkpoint shards:  50%|█████     | 1/2 [00:06<00:06,  6.21s/it][A
-Loading checkpoint shards: 100%|██████████| 2/2 [00:08<00:00,  3.87s/it][ALoading checkpoint shards: 100%|██████████| 2/2 [00:08<00:00,  4.22s/it]
-  0%|          | 0/5000 [00:14<?, ?it/s]
-Traceback (most recent call last):
-  File "/sw/ubuntu-22.04/anaconda3/2023.03/lib/python3.10/runpy.py", line 196, in _run_module_as_main
-    return _run_code(code, main_globals, None,
-  File "/sw/ubuntu-22.04/anaconda3/2023.03/lib/python3.10/runpy.py", line 86, in _run_code
-    exec(code, run_globals)
-  File "/bigtemp/duh6ae/LLM_App_Privacy/src/tests/adult_utility_w_queryrewritedefense.py", line 18, in <module>
-    response = app_agent.run(input_text)
-  File "/bigtemp/duh6ae/LLM_App_Privacy/src/utils/agentUtils.py", line 125, in run
-    self.predefense(input_text)
-  File "/bigtemp/duh6ae/LLM_App_Privacy/src/utils/agentUtils.py", line 50, in predefense
-    input_text = defense(self, input_text)
-  File "/bigtemp/duh6ae/LLM_App_Privacy/src/utils/defense/defenseUtils.py", line 27, in query_rewriter
-    rewriter = AutoModelForCausalLM.from_pretrained(model_name).to(device)
-  File "/u/duh6ae/.local/lib/python3.10/site-packages/transformers/modeling_utils.py", line 2796, in to
-    return super().to(*args, **kwargs)
-  File "/u/duh6ae/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1152, in to
-    return self._apply(convert)
-  File "/u/duh6ae/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 802, in _apply
-    module._apply(fn)
-  File "/u/duh6ae/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 802, in _apply
-    module._apply(fn)
-  File "/u/duh6ae/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 802, in _apply
-    module._apply(fn)
-  [Previous line repeated 2 more times]
-  File "/u/duh6ae/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 825, in _apply
-    param_applied = fn(param)
-  File "/u/duh6ae/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1150, in convert
-    return t.to(device, dtype if t.is_floating_point() or t.is_complex() else None, non_blocking)
-torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 172.00 MiB. GPU 0 has a total capacity of 47.53 GiB of which 153.75 MiB is free. Including non-PyTorch memory, this process has 47.37 GiB memory in use. Of the allocated memory 47.12 GiB is allocated by PyTorch, and 81.50 KiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)

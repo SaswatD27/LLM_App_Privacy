@@ -1,15 +1,0 @@
-Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:06<00:06,  6.18s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:08<00:00,  3.89s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:08<00:00,  4.23s/it]
-You are using the default legacy behaviour of the <class 'transformers.models.llama.tokenization_llama.LlamaTokenizer'>. This is expected, and simply means that the `legacy` (previous) behavior will be used so nothing changes for you. If you want to use the new behaviour, set `legacy=False`. This should only be set if you understand what it means, and thoroughly read the reason why this was added as explained in https://github.com/huggingface/transformers/pull/24565 - if you loaded a llama tokenizer from a GGUF file you can ignore this message
-You are using the default legacy behaviour of the <class 'transformers.models.llama.tokenization_llama_fast.LlamaTokenizerFast'>. This is expected, and simply means that the `legacy` (previous) behavior will be used so nothing changes for you. If you want to use the new behaviour, set `legacy=False`. This should only be set if you understand what it means, and thoroughly read the reason why this was added as explained in https://github.com/huggingface/transformers/pull/24565 - if you loaded a llama tokenizer from a GGUF file you can ignore this message.
-Traceback (most recent call last):
-  File "/sw/ubuntu-22.04/anaconda3/2023.03/lib/python3.10/runpy.py", line 196, in _run_module_as_main
-    return _run_code(code, main_globals, None,
-  File "/sw/ubuntu-22.04/anaconda3/2023.03/lib/python3.10/runpy.py", line 86, in _run_code
-    exec(code, run_globals)
-  File "/bigtemp/duh6ae/LLM_App_Privacy/src/tests/adult_utility.py", line 9, in <module>
-    app_agent = agent(model_name=model_name, max_new_tokens = 50, predefenses = [], postdefenses = [], fetch_probs=True)
-  File "/bigtemp/duh6ae/LLM_App_Privacy/src/utils/agentUtils.py", line 25, in __init__
-    self.attributes = self.get_attributes()
-  File "/bigtemp/duh6ae/LLM_App_Privacy/src/utils/agentUtils.py", line 43, in get_attributes
-    context_shards = self.context.split('.')
-AttributeError: 'agent' object has no attribute 'context'

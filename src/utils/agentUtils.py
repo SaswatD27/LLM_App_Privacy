@@ -4,7 +4,7 @@ from .attack.attackLoader import attackLoader
 from .contextLoading.contextLoader import contextLoader
 
 class agent:
-    def __init__(self, model_name, context = None, cache_dir = '/bigtemp/duh6ae/hfhub_cache', max_new_tokens = 250, do_sample = False, repetition_penalty = 1.03, safety_prompt_index = 1, attack_prompt_type = 'none', attack_prompt_index = 1, context_data = '/bigtemp/duh6ae/LLM_App_Privacy/local_data/adult', context_data_attribute = 'text', context_data_index = 0, predefenses=["query_rewriter"], postdefenses=["check_jailbroken"], sensitive_attributes = ["race", "age", "education", "marital status", "gender"], attributes = [], fetch_probs = False):
+    def __init__(self, model_name, context = None, cache_dir = '/bigtemp/duh6ae/hfhub_cache', max_new_tokens = 250, do_sample = False, repetition_penalty = 1.03, safety_prompt_index = 1, attack_prompt_type = 'none', attack_prompt_index = 1, context_data = '/bigtemp/duh6ae/LLM_App_Privacy/local_data/adult', context_data_attribute = 'text', context_data_index = 0, predefenses=["query_rewriter"], postdefenses=["check_jailbroken"], sensitive_attributes = ["race", "age", "education", "marital status", "gender"], attributes = [], num_shots = 0, fetch_probs = False):
         os.environ['HF_HOME'] = cache_dir
         self.predefenses = predefenses
         self.postdefenses = postdefenses
@@ -23,11 +23,12 @@ class agent:
         self.model = AutoModelForCausalLM.from_pretrained(model_name).to(self.device)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.sensitive_attributes = sensitive_attributes
+        self.num_shots = num_shots
 
         if context is not None:
             self.context = context
         else:
-            self.context = self.contextLoader.load_context(context_data_index)
+            self.context = self.contextLoader.load_context(context_data_index, self.num_shots)
 
         self.attributes = self.get_attributes()
         
@@ -77,6 +78,7 @@ class agent:
     def get_probs(self, outputs, token_list, input_len):
         # Extract the logits from the output
         logits = outputs.scores
+        cumulative_prob = 0
         for step, step_logits in enumerate(logits):
             # Convert logits to probabilities
             probabilities = torch.softmax(step_logits[0], dim=-1)
@@ -91,7 +93,6 @@ class agent:
             target_token_id_list = [self.tokenizer(tok, add_special_tokens=False)['input_ids'][0] for tok in token_list]
             # Print the step number, tokens, and their corresponding probabilities
             print(f"\nStep {step + 1}:")
-            cumulative_prob = 0
             for token, token_id, prob in zip(tokens, token_ids, prob_values):
                 if token in token_list or token_id in target_token_id_list:
                     print(f"Token: {token}, Probability: {prob}")
@@ -139,7 +140,7 @@ class agent:
             print(sensitive_token_list)
             cumulative_prob_dict['sensitive'] = [self.get_probs(outputs, sensitive_token_list, input_len)]
             print('NON-SENSITIVE TOKENS')
-            cumulative_prob_dict['non-sensitive'] = [self.get_probs(outputs, non_sensitive_token_list, input_len)]
+            cumulative_prob_dict['non_sensitive'] = [self.get_probs(outputs, non_sensitive_token_list, input_len)]
             print('##################')
             print(f'Cumulative Probabilities: {cumulative_prob_dict}')
         #output_text = self.tokenizer.batch_decode(outputs.sequences, skip_special_tokens=True)[0]
@@ -149,7 +150,10 @@ class agent:
 
         del inputs
         del outputs
-        return output_text
+        if self.fetch_probs:
+            return output_text, cumulative_prob_dict
+        else:
+            return output_text
 
     def run(self, input_text):
         # Adversary applies the attack prompt to the query
@@ -157,7 +161,10 @@ class agent:
         # Query passes through prefilters
         self.predefense(input_text)
         # Query is sent to the model and response is generated
-        response = self.generate_response(input_text)
+        if self.fetch_probs:
+            response, cumulative_prob_dict = self.generate_response(input_text)
+        else:
+            response = self.generate_response(input_text)
         # print(f'Unfiltered Response: {response} OVER')
         try:
             # try:
@@ -168,4 +175,8 @@ class agent:
         except IndexError:
             pass
         # Response passes through postfilters and output
-        return self.postdefense(response)
+        returned_response = self.postdefense(response)
+        if self.fetch_probs:
+            return returned_response, cumulative_prob_dict
+        else:
+            return returned_response
